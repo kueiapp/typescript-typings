@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "",
-  "typings": "/@types/index.d.ts",
+  "typings": "types/index.d.ts",
   "scripts": {
     "dev": "npx nodemon"
   },
