@@ -2,11 +2,8 @@
   "name": "typescript.typings.fastify",
   "version": "1.0.1",
   "description": "",
-  "main": "",
-  "typings": "types/index.d.ts",
-  "scripts": {
-    "dev": "npx nodemon"
-  },
+  "main": "src/index.ts",
+  "typings": "src/types/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kueiapp/typescript-typings.git"
