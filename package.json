@@ -3,6 +3,7 @@
   "version": "1.0.2",
   "description": "",
   "main": "src/index.ts",
+  "typings": "types/index.d.ts",
   "scripts": {
     "dev": "cross-env NODE_ENV=development npx nodemon",
     "build": "tsc --build tsconfig.json",
