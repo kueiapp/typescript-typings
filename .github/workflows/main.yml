@@ -1,0 +1,106 @@
+name: main
+
+env:
+  CI: true
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "!*"
+
+jobs:
+  setup:
+    name: setup
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.package-version.outputs.version }}
+      tag-name: v${{ steps.package-version.outputs.version }}
+      is-pre-verion: ${{ steps.pre-version.outputs.pre-version }}
+      tag-exist: ${{ steps.check-tag.outputs.exists }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          registry-url: "https://npm.pkg.github.com"
+      - name: set package version
+        id: package-version
+        run: node -p -e '`::set-output name=version::${require("./package.json").version}`'
+
+      - name: check pre-release
+        id: pre-version
+        run: node -p -e '`::set-output name=pre-version::${require("./package.json").version.includes("-")}`'
+
+      - name: check tag exists
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: check-tag
+        with: 
+          tag: v${{ steps.package-version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: echo setting
+        run: |
+          echo "version: ${{ steps.package-version.outputs.version }}"
+          echo "tag-name: v${{ steps.package-version.outputs.version }}"
+          echo "is-pre-verion: ${{ steps.pre-version.outputs.pre-version }}"
+          echo "tag-exist: ${{ steps.check-tag.outputs.exists }}"
+
+  publish:
+    name: publish
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+          registry-url: "https://npm.pkg.github.com"
+      - run: git config --global url."https://${{ secrets.READ_REPO_ACCESS_TOKEN }}@github.com/".insteadOf ssh://git@github.com/
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-node-
+            ${{ runner.os }}-
+      - name: install
+        run: npm ci --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: rm -f .npmrc
+      - run: npm run build:types
+      - run: jq 'del(.devDependencies) | del(.dependencies) | del(.scripts)' package.json > dist/package.json
+      
+      - name: publish
+        run: |
+          npx can-npm-publish --verbose && npm publish ./dist || echo "Does not publish"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: package-version-to-git-tag
+        uses: pkgdeps/git-tag-action@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_repo: ${{ github.repository }}
+          version: ${{ needs.setup.outputs.version }}
+          git_commit_sha: ${{ github.sha }}
+          git_tag_prefix: "v"
+          
+      - name: Create a GitHub release
+        uses: actions/create-release@v1
+        if: steps.change-log.outputs.exists == 'false' && needs.setup.outputs.is-pre-verion != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.setup.outputs.tag-name }}
+          release_name: Release ${{ needs.setup.outputs.tag-name }}
+          body: ${{ steps.change-log.outputs.changelog }}
