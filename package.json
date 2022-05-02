@@ -13,10 +13,6 @@
     "type": "git",
     "url": "git+https://github.com/kueiapp/typescript-typings.git"
   },
-  "publishConfig": {
-    "access": "restricted",
-    "registry": "https://npm.pkg.github.com/"
-  },
   "author": "Kuei",
   "license": "MIT",
   "bugs": {
