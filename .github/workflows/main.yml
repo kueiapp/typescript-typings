@@ -6,7 +6,7 @@ env:
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - "!*"
 
@@ -30,16 +30,19 @@ jobs:
       - name: set package version
         id: package-version
         run: node -p -e '`::set-output name=version::${require("./package.json").version}`'
+
       - name: check pre-release
         id: pre-version
         run: node -p -e '`::set-output name=pre-version::${require("./package.json").version.includes("-")}`'
+
       - name: check tag exists
-        uses: kueiapp/tag-exists-action@v1.0.0
+        uses: mukunku/tag-exists-action@v1.0.0
         id: check-tag
         with: 
           tag: v${{ steps.package-version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: echo setting
         run: |
           echo "version: ${{ steps.package-version.outputs.version }}"
