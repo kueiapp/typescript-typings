@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "strict": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "es2018",
@@ -15,7 +16,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "sourceMap": false
   },
   "include": ["src/**/*", "@types/**/*", "test/**/*"],
   "exclude": ["node_modules"],
